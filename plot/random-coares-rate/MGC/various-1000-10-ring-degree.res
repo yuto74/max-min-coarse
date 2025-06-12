@@ -1,0 +1,29 @@
+option: set style data linespoints
+option: set xlabel "degree"
+option: set ylabel "P(k)"
+option: set xrange [0:10]
+option: set yrange [0:1]
+name: average true
+1 0.0
+2 1.0
+3 0.0
+4 0.0
+5 0.0
+6 0.0
+7 0.0
+8 0.0
+9 0.0
+10 0.0
+name: average GNN
+1 1.0622312696884074e-07
+2 0.9973038315773011
+3 2.4660221265548897e-05
+4 5.2611508929534686e-24
+5 0.002318440180970356
+6 0.00035261785946204326
+7 1.735659440704751e-07
+8 5.2149584709448856e-08
+9 4.981037339923944e-08
+10 1.3152221157497478e-07
+name: input coarse
+2 1.0

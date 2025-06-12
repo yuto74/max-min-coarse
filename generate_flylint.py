@@ -1,0 +1,122 @@
+#!/usr/bin/env python3
+#
+#
+# Copyright (c) 2023, Hiroyuki Ohsaki.
+# All rights reserved.
+#
+# $Id: generate.py,v 1.3 2023/04/08 09:15:17 ohsaki Exp $
+#
+
+import math
+import sys
+
+from perlcompat import die, warn, getopts
+import graph_tools
+import tbdump
+import random
+
+GRAPH_TYPES = 'er random ba barandom db tree li_maini 4-regular voronoi'.split()
+#GRAPH_TYPES = 'random ba barandom db tree li_maini ring 4-regular voronoi'.split()
+#GRAPH_TYPES = 'random ba barandom ring tree btree lattice voronoi db 3-regular 4-regular'.split()
+#GRAPH_TYPES = 'random'.split() 
+#GRAPH_TYPES = 'ba'.split() 
+#GRAPH_TYPES = 'barandom'.split() 
+#GRAPH_TYPES = 'db'.split() 
+#GRAPH_TYPES = 'tree'.split() 
+#GRAPH_TYPES = 'li_maini'.split() 
+#GRAPH_TYPES = 'ring'.split() 
+#GRAPH_TYPES = '4-regular'.split() 
+#GRAPH_TYPES = 'voronoi'.split() 
+#GRAPH_TYPES = 'er'.split() 
+
+def usage():
+    die(f"""\
+usage: {sys.argv[0]} [-v] [file...]
+  -v    verbose mode
+""")
+
+def create_graph(type_, n=100, k=3.):
+    """Randomly generate a graph instance using network generation model TYPE_.
+    If possible, a graph with N vertices and the average degree of K is
+    generated."""
+    m = int(n * k / 2)
+    g = graph_tools.Graph(directed=False)
+    g.set_graph_attribute('name', type_)
+    if type_ == 'er':
+        return g.create_erdos_renyi_graph(n, k/(n-1))    
+    if type_ == 'random':
+        return g.create_random_graph(n, m)
+    if type_ == 'ba':
+        return g.create_graph('ba', n, 10, int(k))
+    if type_ == 'barandom':
+        return g.create_graph('barandom', n, m)
+    if type_ == 'ring':
+        return g.create_graph('ring', n)
+    if type_ == 'tree':
+        return g.create_graph('tree', n)
+    if type_ == 'btree':
+        return g.create_graph('btree', n)
+    if type_ == 'lattice':
+        return g.create_graph('lattice', 2, int(math.sqrt(n)))
+    if type_ == 'voronoi':
+        return g.create_graph('voronoi', n // 2)
+    if type_ == 'db':
+        # NOTE: average degree must be divisable by 2.
+        return g.create_graph('db', n, n * 2)
+    if type_ == '3-regular':
+        return g.create_random_regular_graph(n, 3)
+    if type_ == '4-regular':
+        return g.create_random_regular_graph(n, 4)
+    if type_ == 'li_maini':
+        # NOTE: 5 clusters, 5% of vertices in each cluster, other vertices are
+        # added with preferential attachment.
+        return g.create_graph('li_maini', int(n * .75), 5, int(n * .25 / 5))
+    # FIXMME: support treeba, general_ba, and latent.
+    assert False
+
+        
+def save_graph_original(g, path, degree=False):
+    with open(path, 'w') as f:
+        if degree:
+            txt = '// coarse degree distribution, ' + str(degree) + '\n'
+            f.write(txt)
+        f.write(g.export_dot())
+        
+def random_value_from(value, probability, type='int'):
+     # 指定した確率の前後に寄る範囲を計算
+    lower_bound = value * probability
+    upper_bound = value * ((1 - probability) + 1)
+
+    # ランダムな値を生成
+    random_value = random.uniform(lower_bound, upper_bound)
+
+    # 出力の型に応じて値をフォーマット
+    if type == 'int':
+        return int(random_value)
+    elif type == 'float':
+        return random_value
+    else:
+        raise ValueError("output_type must be 'int' or 'float'.")
+
+def main():
+    opt = getopts('N:n:k:g:m:') or usage()
+    n_graphs = int(opt.N) if opt.N else 1000
+    graph_types = [opt.g] if opt.g else GRAPH_TYPES
+
+
+    for type_ in graph_types:
+        for n in range(n_graphs):
+            n_desired = int(opt.n) if opt.n else 100
+            k_desired = float(opt.k) if opt.k else 2.5
+            n_desired = random_value_from(n_desired, 0.5, 'int')
+            k_desired = random_value_from(k_desired, 0.8, 'float')
+
+            g = create_graph(type_, n_desired, k_desired)
+            base = f'{type_}-{n}.dot'
+
+                
+            save_graph_original(g, f'data-original/{base}')
+
+
+if __name__ == "__main__":
+    main()
