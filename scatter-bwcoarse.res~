@@ -1,0 +1,4 @@
+#include "orig-coarse.def"
+
+name: QOSCOARSE
+#include "orig-bwcoarse.out"

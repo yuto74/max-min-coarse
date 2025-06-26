@@ -1,0 +1,118 @@
+FILES = flow-100.in random-100.dot bw-orig.out qcoarse-50.dot qoscoarse-50.out rm-50.dot \
+	bw-qcoarse.out bw-qoscoarse.out bw-rm.out
+
+all:	$(FILES)
+
+flow-100.in:
+	./gen-flows.py 100 0.01 >flow-100.in
+
+random-100.dot:
+	graphgen 100 125 >$@
+
+qcoarse-50.dot:
+	./q-coarse.py random-100.dot flow-100.in >$@
+
+rm-50.dot:
+	graphfilt -f rm random-100.dot >$@
+
+bw-orig.out:
+	./q-coarse.py -l random-100.dot flow-100.in >$@
+
+bw-rm.out:
+	./q-coarse.py -l rm-50.dot flow-100.in >$@
+
+bw-qcoarse.out:
+	./q-coarse.py -l qcoarse-50.dot flow-100.in >$@
+
+merge:
+	./merge-bw.py bw-orig.out bw-rm.out >orig-rm.out
+#	./merge-bw.py bw-orig.out bw-coarsenet.out >orig-coarsenet.out
+	./merge-bw.py bw-orig.out bw-qcoarse.out >orig-qcoarse.out
+	./merge-bw.py bw-orig.out bw-qoscoarse.out >orig-qoscoarse.out
+clean:
+	rm -f $(FILES)
+
+
+run:
+#	make clean
+#	make random-100.dot
+#	make flow-100.in
+#	make rm-50.dot
+#	make coarsenet-50.dot
+	rm -f qoscoarse-50.out bw-qoscoarse.out
+	make qoscoarse-50.out
+#	rm -r flow-100.in	
+#	make tmp
+	make bw-qoscoarse.out
+	./merge-bw.py bw-orig.out bw-qoscoarse.out >orig-qoscoarse.out
+#	make flows-rm
+#	make flows-coarsenet
+
+tmp:
+	./gen-flows-local.py random-100.dot 50 >$@
+qoscoarse-50.out:
+	./bw_coarse.py -i random-100.dot -o qoscoarse-50.out -a 0.63 -f bw-orig.out
+
+
+bw-qoscoarse.out:
+	./q-coarse.py -l qoscoarse-50.out flow-100.in > bw-qoscoarse.out
+
+flows-rm:
+	./max-min.py random-100.dot rm-50.dot flow-100.in > orig-rm.out
+flows-coarsenet:
+	./max-min.py random-100.dot coarsenet-50.dot flow-100.in > orig-coarsenet.out
+#簡単な例での実験=======================================================
+test_run:
+	rm -f flow-10.in
+	rm -f flow-10.txt
+	rm -f bw_coarse.txt
+	make flow-10.in
+	make flow-10.txt
+	make bw_coarse
+	make bw_coarse.txt
+
+flow-10.in:
+	./gen-flows.py 10 .1 > flow-10.in
+
+flow-10.txt:
+	./q-coarse.py -l dumbbel.dot flow-10.in > flow-10.txt
+
+bw_coarse.txt:
+	./q-coarse.py -l coarse_graph.dot flow-10.in > bw_coarse.txt
+
+bw_coarse:
+	./bw_coarse.py -i dumbbel.dot -f flow-10.txt -o coarse_graph.dot -a 0.6 --embedding_dim 4 --hidden_dim 8 --bottleneck_penalty 10
+
+
+
+# test_run:
+# 	rm -f flow.txt
+# 	rm -f flow-local.txt
+# 	rm -f flow-10.in
+# 	rm -f flow-10-orig.in
+# #	make flow-10-orig.in
+# 	make flow-10.in
+# 	make tmp-flow
+# 	make gcn-test
+# 	make flow-10.in		
+# 	make dumbbel-rm
+# 	make tmp-flow-rm	
+# 	make tmp-flows
+
+# tmp-flow:
+# 	./s_t_flow.py dumbbel.dot flow-10.in > flow-local.txt
+
+# flow-10.in:
+# 	./gen-flows.py 10 .1 > flow-10.in
+
+# gcn-test:
+# 	./run_kmeans_cluster_coarse.py -i dumbbel.dot -o tmp.out -k 5 -f flow-local.txt
+
+# dumbbel-rm:
+# 	graphfilt -f rm dumbbel.dot > dumbbel-rm.dot
+
+# tmp-flow-rm:
+# 	./max-min.py dumbbel.dot dumbbel-rm.dot flow-10.in > orig-rm.out
+
+# tmp-flows:
+# 	./max-min.py dumbbel.dot tmp.out flow-10.in > orig-out.out

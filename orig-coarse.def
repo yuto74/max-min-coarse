@@ -1,0 +1,5 @@
+xlabel: allocated bandwidth in original network [Mbit/s]
+ylabel: allocated bandwidth in coarsened network [Mbit/s]
+option: set style data points
+option: set xrange [0:1000]
+option: set yrange [0:1000]

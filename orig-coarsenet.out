@@ -1,0 +1,3 @@
+> /home/yuto/research/max-min-coarse/merge-bw.py(31)<module>()
+-> print(v1[2], v2[2])
+(Pdb) 

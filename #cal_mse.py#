@@ -1,0 +1,66 @@
+#!/usr/bin/env python3
+import argparse
+import numpy as np
+import sys
+
+def calculate_mse(file_path):
+    """
+    ファイルから2列のデータを読み込み、平均二乗誤差（MSE）を計算します。
+
+    Args:
+        file_path (str): データが格納されたファイルのパス。
+
+    Returns:
+        float or None: 計算されたMSE。エラーの場合はNoneを返します。
+    """
+    try:
+        # ファイルからデータを読み込む
+        data = np.loadtxt(file_path)
+
+        # データが1行しかない場合、numpyは1次元配列として読み込むため、2次元に変換
+        if data.ndim == 1:
+            data = data.reshape(1, -1)
+
+        # データが2列でない場合はエラー
+        if data.shape[1] != 2:
+            sys.stderr.write(f"エラー: ファイル '{file_path}' は2列のデータを含んでいません。\n")
+            return None
+
+        # 1列目と2列目の差の二乗を計算
+        squared_errors = (data[:, 0] - data[:, 1]) ** 2
+
+        # 平均二乗誤差を計算
+        mse = np.mean(squared_errors)
+        return mse
+
+    except FileNotFoundError:
+        sys.stderr.write(f"エラー: ファイル '{file_path}' が見つかりません。\n")
+        return None
+    except Exception as e:
+        sys.stderr.write(f"エラー: ファイル '{file_path}' の処理中に予期せぬエラーが発生しました: {e}\n")
+        return None
+
+def main():
+    """
+    コマンドライン引数を処理し、MSEの計算を実行するメイン関数。
+    """
+    parser = argparse.ArgumentParser(
+        description='ファイル内の2列の数値ペアに対する平均二乗誤差（MSE）を計算します。'
+    )
+    parser.add_argument(
+        'files',
+        metavar='FILE',
+        nargs='+',
+        help='処理対象のテキストファイル（1つ以上指定可能）'
+    )
+
+    args = parser.parse_args()
+
+    for file_path in args.files:
+        mse = calculate_mse(file_path)
+        if mse is not None:
+            print(f"ファイル '{file_path}':")
+            print(f"  二乗誤差の期待値 (MSE): {mse:.4f}")
+
+if __name__ == '__main__':
+    main()
